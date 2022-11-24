@@ -1,91 +1,68 @@
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
-        BlockingQueue<Request> requests = new ArrayBlockingQueue<>(1000);
-        final int timeToProcessRequest = 100;
-        final int numberOfRequestsForSpecialistToProcess = 100;
-        final int timeForRequestsGenerationHold = 1000;
-        final int numberOfRequests = 60;
-        final int numberOfIterations = 5;
+        Random random = new Random();
+        Map<Integer, Integer> map1 = new ConcurrentHashMap<>();
+        Map<Integer, Integer> map2 = Collections.synchronizedMap(new HashMap<>());
 
-        // Thread to simulate first specialist
-        new Thread(() -> {
-            for (int i = 0; i < numberOfRequestsForSpecialistToProcess; i++) {
-                Request request = requests.poll();
-                if (request == null) {
-                    System.out.println("Queue is empty operator1");
-                }
-                else {
-                    try {
-                        Thread.sleep(timeToProcessRequest);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    i--;
-                    System.out.println("Processed request operator1");
-                }
+
+        for (int i = 0; i < 1000; i++) {
+            map1.put(i, random.nextInt());
+        }
+
+        for (int i = 0; i < 1000; i++) {
+            map2.put(i, random.nextInt());
+        }
+
+        Thread thread1 = new Thread(() -> {
+            for (int i = 1000; i < 2000; i++) {
+                map1.put(i, i);
+                //System.out.println("ДОБАВИЛИ " + i);
             }
-        }).start();
+        });
 
-
-        // Thread to simulate second specialist
-        new Thread(() -> {
-            for (int i = 0; i < numberOfRequestsForSpecialistToProcess; i++) {
-                Request request = requests.poll();
-                if (request == null) {
-                    System.out.println("Queue is empty operator2");
-                }
-                else {
-                    try {
-                        Thread.sleep(timeToProcessRequest);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("Processed request operator2");
-                    i--;
-                }
+        Thread thread3 = new Thread(() -> {
+            for (int i = 300; i < 1300; i++) {
+                map1.get(i);
+                //System.out.println("ВЗЯЛИ " + map.get(i));
             }
-        }).start();
+        });
 
-
-        // Thread to simulate third specialist
-        new Thread(() -> {
-            for (int i = 0; i < numberOfRequestsForSpecialistToProcess; i++) {
-                Request request = requests.poll();
-                if (request == null) {
-                    System.out.println("Queue is empty operator3");
-                }
-                else {
-                    try {
-                        Thread.sleep(timeToProcessRequest);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("Processed request operator3");
-                    i--;
-                }
+        Thread thread4 = new Thread(() -> {
+            for (int i = 1000; i < 2000; i++) {
+                map2.put(i, i);
+                //System.out.println("ДОБАВИЛИ " + i);
             }
-        }).start();
+        });
 
-
-        // Thread to simulate requests
-        new Thread(() -> {
-            for (int i = 0; i < numberOfIterations; i++) {
-                for (int j = 0; j < numberOfRequests; j++) {
-                    requests.add(new Request());
-                }
-                System.out.println("Generated 60 requests");
-                try {
-                    Thread.sleep(timeForRequestsGenerationHold);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        Thread thread2 = new Thread(() -> {
+            for (int i = 300; i < 1300; i++) {
+                map2.get(i);
+                //System.out.println("ВЗЯЛИ " + map.get(i));
             }
-        }).start();
+        });
 
+        long startTime1 = System.currentTimeMillis();
+        thread1.start();
+        thread2.start();
+        thread1.join();
+        thread2.join();
+        long stopTime1 = System.currentTimeMillis();
+
+        long startTime2 = System.currentTimeMillis();
+        thread3.start();
+        thread4.start();
+        thread3.join();
+        thread4.join();
+        long stopTime2 = System.currentTimeMillis();
+
+        long elapsedTime1 = stopTime1 - startTime1;
+        long elapsedTime2 = stopTime2 - startTime2;
+        System.out.println("Time taken for ConcurrentHashMap = " + elapsedTime1);
+        System.out.println("Time taken for synchronizedMap = " + elapsedTime2);
     }
 }
